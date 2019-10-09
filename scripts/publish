@@ -1,0 +1,28 @@
+#!/bin/sh -e
+
+export PROJECT="mkautodoc"
+export VERSION=`cat ${PROJECT}/__init__.py | grep __version__ | sed "s/__version__ = //" | sed "s/'//g"`
+export PREFIX=""
+
+if [ -d 'venv' ] ; then
+    export PREFIX="venv/bin/"
+fi
+
+if ! command -v "${PREFIX}twine" &>/dev/null ; then
+    echo "Unable to find the 'twine' command."
+    echo "Install from PyPI, using '${PREFIX}pip install twine'."
+    exit 1
+fi
+
+find ${PROJECT} -type f -name "*.py[co]" -delete
+find ${PROJECT} -type d -name __pycache__ -delete
+
+${PREFIX}python setup.py sdist
+${PREFIX}twine upload dist/*
+# ${PREFIX}mkdocs gh-deploy
+
+scripts/clean
+
+echo "You probably want to also tag the version now:"
+echo "git tag -a ${VERSION} -m 'version ${VERSION}'"
+echo "git push --tags"

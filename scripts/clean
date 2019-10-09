@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+if [ -d 'dist' ] ; then
+    rm -r dist
+fi
+if [ -d 'mkautodoc.egg-info' ] ; then
+    rm -r mkautodoc.egg-info
+fi
