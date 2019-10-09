@@ -123,6 +123,10 @@ class AutoDocProcessor(BlockProcessor):
     RE = re.compile(r'(?:^|\n)::: ?([:a-zA-Z0-9_.]*) *(?:\n|$)')
     RE_SPACES = re.compile('  +')
 
+    def __init__(self, parser, md=None):
+        super().__init__(parser=parser)
+        self.md = md
+
     def test(self, parent: etree.Element, block: etree.Element) -> bool:
         sibling = self.lastChild(parent)
         return bool(self.RE.search(block) or \
@@ -201,7 +205,9 @@ class AutoDocProcessor(BlockProcessor):
     def render_docstring(self, elem: etree.Element, item: typing.Any, docstring: str) -> None:
         docstring_elem = etree.SubElement(elem, 'dd')
         docstring_elem.set('class', 'autodoc-docstring')
-        self.parser.parseChunk(docstring_elem, docstring)
+
+        md = Markdown(extensions=self.md.registeredExtensions)
+        docstring_elem.text = md.convert(docstring)
 
     def render_members(self, elem: etree.Element, item: typing.Any) -> None:
         members_elem = etree.SubElement(elem, 'div')
@@ -225,7 +231,8 @@ class AutoDocProcessor(BlockProcessor):
 class MKAutoDocExtension(Extension):
     def extendMarkdown(self, md: Markdown) -> None:
         md.registerExtension(self)
-        md.parser.blockprocessors.register(AutoDocProcessor(md.parser), 'mkautodoc', 110)
+        processor = AutoDocProcessor(md.parser, md=md)
+        md.parser.blockprocessors.register(processor, 'mkautodoc', 110)
 
 
 def makeExtension():
