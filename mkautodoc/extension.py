@@ -156,7 +156,8 @@ class AutoDocProcessor(BlockProcessor):
                     docstring = trim_docstring(item.__doc__)
                     self.render_docstring(autodoc_div, item, docstring)
                 elif line.startswith(":members:"):
-                    self.render_members(autodoc_div, item)
+                    members = line.split()[1:] or None
+                    self.render_members(autodoc_div, item, members=members)
 
 
         if theRest:
@@ -167,7 +168,6 @@ class AutoDocProcessor(BlockProcessor):
 
     def render_signature(self, elem: etree.Element, item: typing.Any, import_string: str) -> None:
         module_string, _, name_string = import_string.rpartition('.')
-        signature = inspect.signature(item)
 
         # Eg: `some_module.attribute_name`
         signature_elem = etree.SubElement(elem, 'p')
@@ -183,7 +183,13 @@ class AutoDocProcessor(BlockProcessor):
         main_name_elem = etree.SubElement(name_elem, 'strong')
         main_name_elem.text = name_string
 
+        # If this is a property, then we're done.
+        if not callable(item):
+            return
+
         # Eg: `(a, b='default', **kwargs)``
+        signature = inspect.signature(item)
+
         bracket_elem = etree.SubElement(signature_elem, 'span')
         bracket_elem.text = '('
         bracket_elem.set('class', 'autodoc-punctuation')
@@ -209,19 +215,22 @@ class AutoDocProcessor(BlockProcessor):
         md = Markdown(extensions=self.md.registeredExtensions)
         docstring_elem.text = md.convert(docstring)
 
-    def render_members(self, elem: etree.Element, item: typing.Any) -> None:
+    def render_members(self, elem: etree.Element, item: typing.Any, members: typing.List[str]=None) -> None:
         members_elem = etree.SubElement(elem, 'div')
         members_elem.set('class', 'autodoc-members')
 
-        members = {}
+        if members is None:
+            members = sorted(dir(item))
 
-        for attribute_name in dir(item):
+        info_items = []
+        for attribute_name in members:
             if not attribute_name.startswith('_'):
                 attribute = getattr(item, attribute_name)
                 if hasattr(attribute, '__doc__'):
-                    members[attribute_name] = trim_docstring(attribute.__doc__)
+                    info = (attribute_name, trim_docstring(attribute.__doc__))
+                    info_items.append(info)
 
-        for attribute_name, docs in members.items():
+        for attribute_name, docs in info_items:
             attribute = getattr(item, attribute_name)
             self.render_signature(members_elem, attribute, attribute_name)
             self.render_docstring(members_elem, attribute, docs)
