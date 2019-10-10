@@ -194,15 +194,16 @@ class AutoDocProcessor(BlockProcessor):
         bracket_elem.text = '('
         bracket_elem.set('class', 'autodoc-punctuation')
 
-        for param, is_last in last_iter(get_params(signature)):
-            param_elem = etree.SubElement(signature_elem, 'em')
-            param_elem.text = param
-            param_elem.set('class', 'autodoc-param')
+        if signature.parameters:
+            for param, is_last in last_iter(get_params(signature)):
+                param_elem = etree.SubElement(signature_elem, 'em')
+                param_elem.text = param
+                param_elem.set('class', 'autodoc-param')
 
-            if not is_last:
-                comma_elem = etree.SubElement(signature_elem, 'span')
-                comma_elem.text = ', '
-                comma_elem.set('class', 'autodoc-punctuation')
+                if not is_last:
+                    comma_elem = etree.SubElement(signature_elem, 'span')
+                    comma_elem.text = ', '
+                    comma_elem.set('class', 'autodoc-punctuation')
 
         bracket_elem = etree.SubElement(signature_elem, 'span')
         bracket_elem.text = ')'
