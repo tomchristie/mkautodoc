@@ -1,2 +1,5 @@
 *.pyc
+.coverage
+.pytest_cache
+htmlcov
 venv

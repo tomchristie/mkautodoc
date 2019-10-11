@@ -1,0 +1,15 @@
+dist: xenial
+language: python
+
+cache: pip
+
+python:
+    - "3.6"
+    - "3.7"
+    - "3.8-dev"
+
+install:
+    - scripts/install
+
+script:
+    - scripts/test

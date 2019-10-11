@@ -1,0 +1,11 @@
+#!/bin/sh -ex
+
+PROJECT="mkautodoc"
+
+if [ -d "venv" ]; then
+    BIN_PATH="venv/bin/"
+else
+    BIN_PATH=""
+fi
+
+${BIN_PATH}black ${PROJECT} tests "${@}"
