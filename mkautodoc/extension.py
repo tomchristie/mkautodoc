@@ -176,7 +176,7 @@ class AutoDocProcessor(BlockProcessor):
         module_string, _, name_string = import_string.rpartition(".")
 
         # Eg: `some_module.attribute_name`
-        signature_elem = etree.SubElement(elem, "p")
+        signature_elem = etree.SubElement(elem, "div")
         signature_elem.set("class", "autodoc-signature")
 
         if inspect.isclass(item):
@@ -218,7 +218,7 @@ class AutoDocProcessor(BlockProcessor):
     def render_docstring(
         self, elem: etree.Element, item: typing.Any, docstring: str
     ) -> None:
-        docstring_elem = etree.SubElement(elem, "dd")
+        docstring_elem = etree.SubElement(elem, "div")
         docstring_elem.set("class", "autodoc-docstring")
 
         md = Markdown(extensions=self.md.registeredExtensions)
@@ -231,15 +231,14 @@ class AutoDocProcessor(BlockProcessor):
         members_elem.set("class", "autodoc-members")
 
         if members is None:
-            members = sorted(dir(item))
+            members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
 
         info_items = []
         for attribute_name in members:
-            if not attribute_name.startswith("_"):
-                attribute = getattr(item, attribute_name)
-                if hasattr(attribute, "__doc__"):
-                    info = (attribute_name, trim_docstring(attribute.__doc__))
-                    info_items.append(info)
+            attribute = getattr(item, attribute_name)
+            docs = trim_docstring(getattr(attribute, "__doc__", ""))
+            info = (attribute_name, docs)
+            info_items.append(info)
 
         for attribute_name, docs in info_items:
             attribute = getattr(item, attribute_name)
