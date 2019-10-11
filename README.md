@@ -4,6 +4,8 @@ Python API documention for MkDocs.
 
 This markdown extension adds `autodoc` style support, for use with MkDocs.
 
+![aIAgAAjQpG](https://user-images.githubusercontent.com/647359/66651320-a276ff80-ec2a-11e9-9cec-9eba425d5304.gif)
+
 ## Usage
 
 #### 1. Include the extension in you `mkdocs.yml` config file:
