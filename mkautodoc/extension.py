@@ -10,7 +10,7 @@ import typing
 
 # Fuzzy regex for determining source lines in __init__ that look like
 # attribute assignments.  Eg. `self.counter = 0`
-SET_ATTRIBUTE = re.compile('^([ \t]*)self[.]([A-Za-z0-9_]+) *=')
+SET_ATTRIBUTE = re.compile("^([ \t]*)self[.]([A-Za-z0-9_]+) *=")
 
 
 def import_from_string(import_str: str) -> typing.Any:
@@ -19,7 +19,7 @@ def import_from_string(import_str: str) -> typing.Any:
     try:
         module = importlib.import_module(module_str)
     except ImportError as exc:
-        module_name = module_str.split('.', 1)[0]
+        module_name = module_str.split(".", 1)[0]
         if exc.name != module_name:
             raise exc from None
         raise ValueError(f"Could not import module {module_str!r}.")
@@ -44,21 +44,21 @@ def get_params(signature: inspect.Signature) -> typing.List[str]:
     for parameter in signature.parameters.values():
         value = parameter.name
         if parameter.default is not parameter.empty:
-            value = f'{value}={parameter.default!r}'
+            value = f"{value}={parameter.default!r}"
 
         if parameter.kind is parameter.VAR_POSITIONAL:
             render_kw_only_separator = False
-            value = f'*{value}'
+            value = f"*{value}"
         elif parameter.kind is parameter.VAR_KEYWORD:
-            value = f'**{value}'
+            value = f"**{value}"
         elif parameter.kind is parameter.POSITIONAL_ONLY:
             if render_pos_only_separator:
                 render_pos_only_separator = False
-                params.append('/')
+                params.append("/")
         elif parameter.kind is parameter.KEYWORD_ONLY:
             if render_kw_only_separator:
                 render_kw_only_separator = False
-                params.append('*')
+                params.append("*")
         params.append(value)
 
     return params
@@ -89,7 +89,7 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
     See: https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     """
     if not docstring:
-        return ''
+        return ""
 
     # Convert tabs to spaces (following the normal Python rules)
     # and split into a list of lines:
@@ -114,14 +114,14 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
         trimmed.pop(0)
 
     # Return a single string:
-    return '\n'.join(trimmed)
+    return "\n".join(trimmed)
 
 
 class AutoDocProcessor(BlockProcessor):
 
-    CLASSNAME = 'autodoc'
-    RE = re.compile(r'(?:^|\n)::: ?([:a-zA-Z0-9_.]*) *(?:\n|$)')
-    RE_SPACES = re.compile('  +')
+    CLASSNAME = "autodoc"
+    RE = re.compile(r"(?:^|\n)::: ?([:a-zA-Z0-9_.]*) *(?:\n|$)")
+    RE_SPACES = re.compile("  +")
 
     def __init__(self, parser, md=None):
         super().__init__(parser=parser)
@@ -129,9 +129,14 @@ class AutoDocProcessor(BlockProcessor):
 
     def test(self, parent: etree.Element, block: etree.Element) -> bool:
         sibling = self.lastChild(parent)
-        return bool(self.RE.search(block) or \
-            (block.startswith(' ' * self.tab_length) and sibling is not None and
-             sibling.get('class', '').find(self.CLASSNAME) != -1))
+        return bool(
+            self.RE.search(block)
+            or (
+                block.startswith(" " * self.tab_length)
+                and sibling is not None
+                and sibling.get("class", "").find(self.CLASSNAME) != -1
+            )
+        )
 
     def run(self, parent: etree.Element, blocks: etree.Element) -> None:
         sibling = self.lastChild(parent)
@@ -139,7 +144,7 @@ class AutoDocProcessor(BlockProcessor):
         m = self.RE.search(block)
 
         if m:
-            block = block[m.end():]  # removes the first line
+            block = block[m.end() :]  # removes the first line
 
         block, theRest = self.detab(block)
 
@@ -147,8 +152,8 @@ class AutoDocProcessor(BlockProcessor):
             import_string = m.group(1)
             item = import_from_string(import_string)
 
-            autodoc_div = etree.SubElement(parent, 'div')
-            autodoc_div.set('class', self.CLASSNAME)
+            autodoc_div = etree.SubElement(parent, "div")
+            autodoc_div.set("class", self.CLASSNAME)
 
             self.render_signature(autodoc_div, item, import_string)
             for line in block.splitlines():
@@ -159,28 +164,29 @@ class AutoDocProcessor(BlockProcessor):
                     members = line.split()[1:] or None
                     self.render_members(autodoc_div, item, members=members)
 
-
         if theRest:
             # This block contained unindented line(s) after the first indented
             # line. Insert these lines as the first block of the master blocks
             # list for future processing.
             blocks.insert(0, theRest)
 
-    def render_signature(self, elem: etree.Element, item: typing.Any, import_string: str) -> None:
-        module_string, _, name_string = import_string.rpartition('.')
+    def render_signature(
+        self, elem: etree.Element, item: typing.Any, import_string: str
+    ) -> None:
+        module_string, _, name_string = import_string.rpartition(".")
 
         # Eg: `some_module.attribute_name`
-        signature_elem = etree.SubElement(elem, 'p')
-        signature_elem.set('class', 'autodoc-signature')
+        signature_elem = etree.SubElement(elem, "p")
+        signature_elem.set("class", "autodoc-signature")
 
         if inspect.isclass(item):
-            qualifier_elem = etree.SubElement(signature_elem, 'em')
+            qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "class "
 
-        name_elem = etree.SubElement(signature_elem, 'code')
+        name_elem = etree.SubElement(signature_elem, "code")
         if module_string:
-            name_elem.text = module_string + '.'
-        main_name_elem = etree.SubElement(name_elem, 'strong')
+            name_elem.text = module_string + "."
+        main_name_elem = etree.SubElement(name_elem, "strong")
         main_name_elem.text = name_string
 
         # If this is a property, then we're done.
@@ -190,44 +196,48 @@ class AutoDocProcessor(BlockProcessor):
         # Eg: `(a, b='default', **kwargs)``
         signature = inspect.signature(item)
 
-        bracket_elem = etree.SubElement(signature_elem, 'span')
-        bracket_elem.text = '('
-        bracket_elem.set('class', 'autodoc-punctuation')
+        bracket_elem = etree.SubElement(signature_elem, "span")
+        bracket_elem.text = "("
+        bracket_elem.set("class", "autodoc-punctuation")
 
         if signature.parameters:
             for param, is_last in last_iter(get_params(signature)):
-                param_elem = etree.SubElement(signature_elem, 'em')
+                param_elem = etree.SubElement(signature_elem, "em")
                 param_elem.text = param
-                param_elem.set('class', 'autodoc-param')
+                param_elem.set("class", "autodoc-param")
 
                 if not is_last:
-                    comma_elem = etree.SubElement(signature_elem, 'span')
-                    comma_elem.text = ', '
-                    comma_elem.set('class', 'autodoc-punctuation')
+                    comma_elem = etree.SubElement(signature_elem, "span")
+                    comma_elem.text = ", "
+                    comma_elem.set("class", "autodoc-punctuation")
 
-        bracket_elem = etree.SubElement(signature_elem, 'span')
-        bracket_elem.text = ')'
-        bracket_elem.set('class', 'autodoc-punctuation')
+        bracket_elem = etree.SubElement(signature_elem, "span")
+        bracket_elem.text = ")"
+        bracket_elem.set("class", "autodoc-punctuation")
 
-    def render_docstring(self, elem: etree.Element, item: typing.Any, docstring: str) -> None:
-        docstring_elem = etree.SubElement(elem, 'dd')
-        docstring_elem.set('class', 'autodoc-docstring')
+    def render_docstring(
+        self, elem: etree.Element, item: typing.Any, docstring: str
+    ) -> None:
+        docstring_elem = etree.SubElement(elem, "dd")
+        docstring_elem.set("class", "autodoc-docstring")
 
         md = Markdown(extensions=self.md.registeredExtensions)
         docstring_elem.text = md.convert(docstring)
 
-    def render_members(self, elem: etree.Element, item: typing.Any, members: typing.List[str]=None) -> None:
-        members_elem = etree.SubElement(elem, 'div')
-        members_elem.set('class', 'autodoc-members')
+    def render_members(
+        self, elem: etree.Element, item: typing.Any, members: typing.List[str] = None
+    ) -> None:
+        members_elem = etree.SubElement(elem, "div")
+        members_elem.set("class", "autodoc-members")
 
         if members is None:
             members = sorted(dir(item))
 
         info_items = []
         for attribute_name in members:
-            if not attribute_name.startswith('_'):
+            if not attribute_name.startswith("_"):
                 attribute = getattr(item, attribute_name)
-                if hasattr(attribute, '__doc__'):
+                if hasattr(attribute, "__doc__"):
                     info = (attribute_name, trim_docstring(attribute.__doc__))
                     info_items.append(info)
 
@@ -237,12 +247,11 @@ class AutoDocProcessor(BlockProcessor):
             self.render_docstring(members_elem, attribute, docs)
 
 
-
 class MKAutoDocExtension(Extension):
     def extendMarkdown(self, md: Markdown) -> None:
         md.registerExtension(self)
         processor = AutoDocProcessor(md.parser, md=md)
-        md.parser.blockprocessors.register(processor, 'mkautodoc', 110)
+        md.parser.blockprocessors.register(processor, "mkautodoc", 110)
 
 
 def makeExtension():

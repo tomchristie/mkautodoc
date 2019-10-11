@@ -1,8 +1,8 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 
-if [ -d 'dist' ] ; then
-    rm -r dist
-fi
-if [ -d 'mkautodoc.egg-info' ] ; then
-    rm -r mkautodoc.egg-info
-fi
+PROJECT=mkautodoc
+
+find ${PROJECT} -type f -name "*.py[co]" -delete
+find ${PROJECT} -type d -name __pycache__ -delete
+find tests -type d -name __pycache__ -delete
+rm -rf dist htmlcov .pytest_cache ${PROJECT}.egg-info

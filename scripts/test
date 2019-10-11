@@ -1,0 +1,15 @@
+#!/bin/sh -ex
+
+PROJECT="mkautodoc"
+export PYTHONPATH=tests/mocklib
+
+if [ -d 'venv' ] ; then
+    BIN_PATH="venv/bin/"
+else
+    BIN_PATH=""
+fi
+
+scripts/lint --check
+${BIN_PATH}pytest tests --cov=${PROJECT} --cov=tests --cov-report=
+${BIN_PATH}coverage html
+${BIN_PATH}coverage report --show-missing

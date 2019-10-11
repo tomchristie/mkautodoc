@@ -1,4 +1,12 @@
 #!/bin/sh -ex
 
-python -m venv venv
-venv/bin/pip install -r requirements.txt
+if [ "${CONTINUOUS_INTEGRATION}" = "true" ]; then
+    BIN_PATH=""
+else
+    rm -rf venv
+    python -m venv venv
+    BIN_PATH="venv/bin/"
+fi
+
+${BIN_PATH}pip install -r requirements.txt
+${BIN_PATH}pip install -e .

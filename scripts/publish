@@ -1,25 +1,25 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 
-export PROJECT="mkautodoc"
-export VERSION=`cat ${PROJECT}/__init__.py | grep __version__ | sed "s/__version__ = //" | sed "s/'//g"`
-export PREFIX=""
+PROJECT="mkautodoc"
+VERSION=`cat ${PROJECT}/__init__.py | grep __version__ | sed "s/__version__ = //" | sed "s/'//g"`
 
 if [ -d 'venv' ] ; then
-    export PREFIX="venv/bin/"
+    BIN_PATH="venv/bin/"
+else
+    BIN_PATH=""
 fi
 
-if ! command -v "${PREFIX}twine" &>/dev/null ; then
+if ! command -v "${BIN_PATH}twine" &>/dev/null ; then
     echo "Unable to find the 'twine' command."
-    echo "Install from PyPI, using '${PREFIX}pip install twine'."
+    echo "Install from PyPI, using '${BIN_PATH}pip install twine'."
     exit 1
 fi
 
-find ${PROJECT} -type f -name "*.py[co]" -delete
-find ${PROJECT} -type d -name __pycache__ -delete
+scripts/clean
 
-${PREFIX}python setup.py sdist
-${PREFIX}twine upload dist/*
-# ${PREFIX}mkdocs gh-deploy
+${BIN_PATH}python setup.py sdist
+${BIN_PATH}twine upload dist/*
+# ${BIN_PATH}mkdocs gh-deploy
 
 scripts/clean
 
