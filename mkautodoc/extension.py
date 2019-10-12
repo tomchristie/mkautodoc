@@ -66,7 +66,7 @@ def get_params(signature: inspect.Signature) -> typing.List[str]:
 
 def last_iter(seq: typing.Sequence) -> typing.Iterator:
     """
-    Given an sequence, return a two-tuple (item, is_last) iterable.
+    Given a sequence, return a two-tuple (item, is_last) iterable.
 
     See: https://stackoverflow.com/a/1633483/596689
     """
