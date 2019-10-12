@@ -18,6 +18,18 @@ def test_docstring():
     ]
 
 
+def test_async_function():
+    content = """
+::: mocklib.example_async_function
+"""
+    output = markdown.markdown(content, extensions=["mkautodoc"])
+    assert output.splitlines() == [
+        '<div class="autodoc">',
+        '<div class="autodoc-signature"><em>async </em><code>mocklib.<strong>example_async_function</strong></code><span class="autodoc-punctuation">(</span><span class="autodoc-punctuation">)</span></div>',
+        "</div>",
+    ]
+
+
 def test_members():
     content = """
 # Example

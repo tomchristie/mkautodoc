@@ -182,6 +182,9 @@ class AutoDocProcessor(BlockProcessor):
         if inspect.isclass(item):
             qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "class "
+        elif inspect.iscoroutinefunction(item):
+            qualifier_elem = etree.SubElement(signature_elem, "em")
+            qualifier_elem.text = "async "
 
         name_elem = etree.SubElement(signature_elem, "code")
         if module_string:
