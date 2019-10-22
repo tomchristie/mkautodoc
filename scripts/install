@@ -8,5 +8,6 @@ else
     BIN_PATH="venv/bin/"
 fi
 
+${BIN_PATH}pip install --upgrade pip
 ${BIN_PATH}pip install -r requirements.txt
 ${BIN_PATH}pip install -e .
