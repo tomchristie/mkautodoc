@@ -24,3 +24,9 @@ class ExampleClass:
         """
         This is a property with a *docstring*.
         """
+
+
+async def example_async_function():
+    """
+    This is a coroutine function as can be seen by the *async* keyword.
+    """
