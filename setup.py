@@ -31,7 +31,7 @@ version = get_version('mkautodoc')
 setup(
     name='mkautodoc',
     version=version,
-    url='https://github.com/encode/mkautodoc',
+    url='https://github.com/tomchristie/mkautodoc',
     license='BSD',
     description='AutoDoc for MarkDown',
     author='Tom Christie',
