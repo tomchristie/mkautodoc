@@ -124,14 +124,7 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
             if t in trimmed[i]:
                 trimmed[i] = trimmed[i].replace(
                     t,
-                    "".join([
-                        "[`",
-                        t,
-                        "`](",
-                        "https://docs.python.org/3/stdtypes.html#",
-                        t,
-                        ")"
-                    ])
+                    f"[`{t}`](https://docs.python.org/3/stdtypes.html#{t})"
                 )
 
     # Return a single string:
