@@ -26,8 +26,10 @@ def import_from_string(import_str: str) -> typing.Any:
 
     try:
         return getattr(module, attr_str)
-    except AttributeError as exc:
-        raise ValueError(f"Attribute {attr_str!r} not found in module {module_str!r}.")
+    except AttributeError:
+        raise ValueError(
+            f"Attribute {attr_str!r} not found in module {module_str!r}."
+        )
 
 
 def get_params(signature: inspect.Signature) -> typing.List[str]:
@@ -86,7 +88,7 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
     """
     Trim leading indent from a docstring.
 
-    See: https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    See: https://python.org/dev/peps/pep-0257/#handling-docstring-indentation
     """
     if not docstring:
         return ""
@@ -112,6 +114,25 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
         trimmed.pop()
     while trimmed and not trimmed[0]:
         trimmed.pop(0)
+
+    # replace mentions of built-in types with links to the docs
+    # on docs.python.org
+    for i, x in enumerate(trimmed):
+        for t in [
+            "str", "int", "bytes", "bytearray", "list", "tuple", "range"
+        ]:
+            if t in trimmed[i]:
+                trimmed[i] = trimmed[i].replace(
+                    t,
+                    "".join([
+                        "[`",
+                        t,
+                        "`](",
+                        "https://docs.python.org/3/stdtypes.html#",
+                        t,
+                        ")"
+                    ])
+                )
 
     # Return a single string:
     return "\n".join(trimmed)
@@ -139,12 +160,11 @@ class AutoDocProcessor(BlockProcessor):
         )
 
     def run(self, parent: etree.Element, blocks: etree.Element) -> None:
-        sibling = self.lastChild(parent)
         block = blocks.pop(0)
         m = self.RE.search(block)
 
         if m:
-            block = block[m.end() :]  # removes the first line
+            block = block[m.end():]  # removes the first line
 
         block, theRest = self.detab(block)
 
@@ -228,13 +248,18 @@ class AutoDocProcessor(BlockProcessor):
         docstring_elem.text = md.convert(docstring)
 
     def render_members(
-        self, elem: etree.Element, item: typing.Any, members: typing.List[str] = None
+        self,
+        elem: etree.Element,
+        item: typing.Any,
+        members: typing.List[str] = None
     ) -> None:
         members_elem = etree.SubElement(elem, "div")
         members_elem.set("class", "autodoc-members")
 
         if members is None:
-            members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
+            members = sorted([
+                attr for attr in dir(item) if not attr.startswith("_")
+            ])
 
         info_items = []
         for attribute_name in members:
