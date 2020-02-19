@@ -1,6 +1,17 @@
+from typing import Dict, List
+
+
 def example_function(a, b=None, *args, **kwargs):
     """
     This is a function with a *docstring*.
+    """
+
+
+def annotated_function(
+    a: int, b: List[Dict[str, float]] = None, *args, **kwargs
+) -> bool:
+    """
+    This function has annotations.
     """
 
 

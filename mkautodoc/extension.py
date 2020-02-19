@@ -30,10 +30,10 @@ def import_from_string(import_str: str) -> typing.Any:
         raise ValueError(f"Attribute {attr_str!r} not found in module {module_str!r}.")
 
 
-def get_params(signature: inspect.Signature) -> typing.List[str]:
+def render_params(signature: inspect.Signature) -> typing.List[etree.Element]:
     """
-    Given a function signature, return a list of parameter strings
-    to use in documentation.
+    Given a function signature, return a list of parameters rendered to
+    etree elements, for use in documentation.
 
     Eg. test(a, b=None, **kwargs) -> ['a', 'b=None', '**kwargs']
     """
@@ -42,24 +42,47 @@ def get_params(signature: inspect.Signature) -> typing.List[str]:
     render_kw_only_separator = True
 
     for parameter in signature.parameters.values():
-        value = parameter.name
-        if parameter.default is not parameter.empty:
-            value = f"{value}={parameter.default!r}"
+        param = etree.Element("span", {"class": "autodoc-param-definition"})
 
+        value = parameter.name
         if parameter.kind is parameter.VAR_POSITIONAL:
             render_kw_only_separator = False
             value = f"*{value}"
         elif parameter.kind is parameter.VAR_KEYWORD:
             value = f"**{value}"
+        param_name = etree.SubElement(
+            param, "em", {"class": "autodoc-param autodoc-param-name"}
+        )
+        param_name.text = value
+
+        if parameter.annotation is not parameter.empty:
+            colon = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
+            colon.text = ": "
+            type_ = etree.SubElement(param, "span", {"class": "autodoc-type-annotation"})
+            type_.text = inspect.formatannotation(parameter.annotation)
+        if parameter.default is not parameter.empty:
+            equals = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
+            equals.text = "="
+            default = etree.SubElement(
+                param, "span", {"class": "autodoc-param-default"}
+            )
+            default.text = f"{parameter.default!r}"
+
         elif parameter.kind is parameter.POSITIONAL_ONLY:
             if render_pos_only_separator:
                 render_pos_only_separator = False
-                params.append("/")
+                pos_seperator = etree.SubElement(
+                    param, "span", {"class": "autodoc-punctuation"}
+                )
+                pos_seperator.text = "/"
         elif parameter.kind is parameter.KEYWORD_ONLY:
             if render_kw_only_separator:
                 render_kw_only_separator = False
-                params.append("*")
-        params.append(value)
+                kw_separator = etree.SubElement(
+                    param, "span", {"class": "autodoc-punctuation"}
+                )
+                kw_separator.text = "*"
+        params.append(param)
 
     return params
 
@@ -182,9 +205,11 @@ class AutoDocProcessor(BlockProcessor):
         if inspect.isclass(item):
             qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "class "
+            qualifier_elem.set("class", "autodoc-qualifier")
         elif inspect.iscoroutinefunction(item):
             qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "async "
+            qualifier_elem.set("class", "autodoc-qualifier")
 
         name_elem = etree.SubElement(signature_elem, "code")
         if module_string:
@@ -204,19 +229,38 @@ class AutoDocProcessor(BlockProcessor):
         bracket_elem.set("class", "autodoc-punctuation")
 
         if signature.parameters:
-            for param, is_last in last_iter(get_params(signature)):
-                param_elem = etree.SubElement(signature_elem, "em")
-                param_elem.text = param
-                param_elem.set("class", "autodoc-param")
-
+            for param_elem, is_last in last_iter(render_params(signature)):
+                signature_elem.append(param_elem)
                 if not is_last:
-                    comma_elem = etree.SubElement(signature_elem, "span")
+                    comma_elem = etree.SubElement(param_elem, "span")
                     comma_elem.text = ", "
                     comma_elem.set("class", "autodoc-punctuation")
 
         bracket_elem = etree.SubElement(signature_elem, "span")
         bracket_elem.text = ")"
         bracket_elem.set("class", "autodoc-punctuation")
+
+        return_annotated = (
+            signature.return_annotation is not signature.empty
+            and
+            # covers return-type of class signatures:
+            signature.return_annotation is not None
+        )
+        if return_annotated:
+            arrow = etree.SubElement(
+                signature_elem, "span", {"class": "autdoc-punctuation"}
+            )
+            arrow.text = " -> "
+            signature_type = etree.SubElement(
+                signature_elem, "span", {"class": "autodoc-type-annotation"}
+            )
+            signature_type.text = inspect.formatannotation(signature.return_annotation)
+
+        rendered_signature_text = "".join(signature_elem.itertext())
+        if len(rendered_signature_text) > 88:
+            signature_elem.set(
+                "class", signature_elem.attrib["class"] + " autodoc-signature__long"
+            )
 
     def render_docstring(
         self, elem: etree.Element, item: typing.Any, docstring: str
