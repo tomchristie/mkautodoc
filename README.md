@@ -59,6 +59,11 @@ div.autodoc-members {
   padding-left: 20px;
   margin-bottom: 15px;
 }
+
+div.autodoc-signature__long .autodoc-param-definition {
+  display: block;
+  margin-left: 20px;
+}
 ```
 
 ## Notes
