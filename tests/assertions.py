@@ -4,12 +4,13 @@ import textwrap
 
 
 def tostring(xml_string):
-    """ Wraps `xml_string` in a div so it can be rendered,
-        even if it has multiple roots"""
+    """
+    Wraps `xml_string` in a div so it can be rendered, even if it has multiple roots.
+    """
     return remove_indents(f"<div>{remove_indents(xml_string)}</div>").encode("utf-8")
 
 
-def to_readible_error_output(xml_string):
+def to_readable_error_output(xml_string):
     return textwrap.dedent(
         "\n".join(
             minidom.parseString(tostring(xml_string))
@@ -20,23 +21,26 @@ def to_readible_error_output(xml_string):
 
 
 def remove_indents(html):
-    """ Remove leading whitespace from a string
+    """
+    Remove leading whitespace from a string
 
-        e.g.
-            input:                    output:
-            . <div>                   . <div>
-            .    <p>Some Text</p>     . <p>Some Text</p>
-            .    <div>                . <div>
-            .      Some more text     . Some more text
-            .    </div>               . </div>
-            . </div>                  . </div>
+    e.g.
+        input:                    output:
+        . <div>                   . <div>
+        .    <p>Some Text</p>     . <p>Some Text</p>
+        .    <div>                . <div>
+        .      Some more text     . Some more text
+        .    </div>               . </div>
+        . </div>                  . </div>
     """
     lines = [el.lstrip() for el in html.split("\n")]
     return "".join([el for el in lines if el or el != "\n"])
 
 
 def assert_elements_equal(element, reference_element):
-    """  Assert, recursively, the equality of two etree objects. """
+    """
+    Assert, recursively, the equality of two etree objects.
+    """
     assert (
         element.text == reference_element.text
     ), f"Text doesn't match: {element.text} =/= {reference_element.text}."
@@ -54,7 +58,7 @@ def assert_xml_equal(xml_string, expected_xml_string):
     # this prints a human-formatted string of what the test passed in -- useful
     # if you need to modify test expectations after you've modified
     # a rendering and tested it visually
-    print(to_readible_error_output(xml_string))
+    print(to_readable_error_output(xml_string))
 
     assert_elements_equal(
         etree.ElementTree.fromstring(tostring(xml_string)),
