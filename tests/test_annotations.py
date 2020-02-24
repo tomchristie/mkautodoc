@@ -12,7 +12,7 @@ def test_annotated_function():
     output = markdown.markdown(content, extensions=["mkautodoc"])
     assert_xml_equal(
         output,
-        """\
+        """
 <h1>Example</h1>
 <div class="autodoc">
   <div class="autodoc-signature autodoc-signature__long">

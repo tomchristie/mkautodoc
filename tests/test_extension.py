@@ -12,7 +12,7 @@ def test_docstring():
     output = markdown.markdown(content, extensions=["mkautodoc"])
     assert_xml_equal(
         output,
-        """\
+        """
 <h1>Example</h1>
 <div class="autodoc">
   <div class="autodoc-signature">
@@ -56,7 +56,7 @@ def test_async_function():
     output = markdown.markdown(content, extensions=["mkautodoc"])
     assert_xml_equal(
         output,
-        """\
+        """
 <div class="autodoc">
   <div class="autodoc-signature">
     <em class="autodoc-qualifier">async </em>
@@ -82,7 +82,7 @@ def test_members():
     output = markdown.markdown(content, extensions=["mkautodoc"])
     assert_xml_equal(
         output,
-        """\
+        """
 <h1>Example</h1>
 <div class="autodoc">
   <div class="autodoc-signature">
