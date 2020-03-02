@@ -11,6 +11,9 @@ import typing
 # Fuzzy regex for determining source lines in __init__ that look like
 # attribute assignments.  Eg. `self.counter = 0`
 SET_ATTRIBUTE = re.compile("^([ \t]*)self[.]([A-Za-z0-9_]+) *=")
+SUPPORTED_MARKDOWN_EXTENSIONS = [
+    "extra",
+]
 
 
 def import_from_string(import_str: str) -> typing.Any:
@@ -267,8 +270,9 @@ class AutoDocProcessor(BlockProcessor):
     ) -> None:
         docstring_elem = etree.SubElement(elem, "div")
         docstring_elem.set("class", "autodoc-docstring")
-
-        md = Markdown(extensions=self.md.registeredExtensions)
+        md = Markdown(
+            extensions=SUPPORTED_MARKDOWN_EXTENSIONS + self.md.registeredExtensions
+        )
         docstring_elem.text = md.convert(docstring)
 
     def render_members(

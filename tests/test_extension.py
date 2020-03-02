@@ -138,3 +138,48 @@ def test_members():
   </div>
 </div>""",
     )
+
+
+def test_extra_extentions_are_supported():
+    """
+    Tests support for 'extra' extensions as supported by
+    the markdown package https://python-markdown.github.io/extensions/extra/
+    """
+    content = """
+
+# Example
+::: mocklib.function_with_table
+    :docstring:
+    """
+    output = markdown.markdown(content, extensions=["mkautodoc"])
+    assert_xml_equal(
+        output,
+        """
+<div class="autodoc">
+  <div class="autodoc-signature">
+    <code>
+      mocklib.
+      <strong>function_with_table</strong>
+    </code>
+    <span class="autodoc-punctuation">(</span>
+    <span class="autodoc-punctuation">)</span>
+  </div>
+  <div class="autodoc-docstring">
+    <p>I have markdown tables</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Such</th>
+          <th>As</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>this</td>
+          <td>one</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>""",
+    )

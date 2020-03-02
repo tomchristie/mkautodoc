@@ -7,6 +7,16 @@ def example_function(a, b=None, *args, **kwargs):
     """
 
 
+def function_with_table():
+    """
+    I have markdown tables
+
+    | Such | As |
+    | ---- | -- |
+    | this | one |
+    """
+
+
 def annotated_function(
     a: int, b: List[Dict[str, float]] = None, *args, **kwargs
 ) -> bool:
