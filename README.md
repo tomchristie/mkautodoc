@@ -80,3 +80,14 @@ May optionally accept a list of member attributes that should be documented. For
     :docstring:
     :members: currency vat_registered calculate_expenses
 ```
+
+#### The `:members-exclude:` declaration.
+
+Renders documentation identically to `:members:`, but removes any member attributes that are listed.
+For example:
+
+```markdown
+::: my_library.SomeClass
+    :docstring:
+    :members-exclude: currency
+```
