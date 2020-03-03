@@ -156,13 +156,27 @@ class AutoDocProcessor(BlockProcessor):
             autodoc_div.set("class", self.CLASSNAME)
 
             self.render_signature(autodoc_div, item, import_string)
+            docstring = None
+            members = None
+            members_excluded = None
             for line in block.splitlines():
                 if line.startswith(":docstring:"):
                     docstring = trim_docstring(item.__doc__)
-                    self.render_docstring(autodoc_div, item, docstring)
                 elif line.startswith(":members:"):
-                    members = line.split()[1:] or None
-                    self.render_members(autodoc_div, item, members=members)
+                    members = line.split()[1:]
+                elif line.startswith(":members-exclude:"):
+                    members_excluded = line.split()[1:]
+
+            # Render docstring and whitelisted members
+            if docstring is not None:
+                self.render_docstring(autodoc_div, item, docstring)
+            if members is not None or members_excluded is not None:
+                self.render_members(
+                    autodoc_div,
+                    item,
+                    members=members,
+                    members_excluded=members_excluded,
+                )
 
         if theRest:
             # This block contained unindented line(s) after the first indented
@@ -228,13 +242,21 @@ class AutoDocProcessor(BlockProcessor):
         docstring_elem.text = md.convert(docstring)
 
     def render_members(
-        self, elem: etree.Element, item: typing.Any, members: typing.List[str] = None
+        self,
+        elem: etree.Element,
+        item: typing.Any,
+        members: typing.List[str] = None,
+        members_excluded: typing.List[str] = None,
     ) -> None:
         members_elem = etree.SubElement(elem, "div")
         members_elem.set("class", "autodoc-members")
 
-        if members is None:
+        if members is None or len(members) == 0:
             members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
+
+        if members_excluded is not None:
+            # Remove excluded members, if any
+            members = [member for member in members if member not in members_excluded]
 
         info_items = []
         for attribute_name in members:

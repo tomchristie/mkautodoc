@@ -52,3 +52,25 @@ def test_members():
         "</div>",
         "</div>",
     ]
+
+
+def test_members_exclude():
+    content = """
+# Example
+
+::: mocklib.ExampleClass
+    :docstring:
+    :members-exclude: example_property
+"""
+    output = markdown.markdown(content, extensions=["mkautodoc"])
+    assert output.splitlines() == [
+        "<h1>Example</h1>",
+        '<div class="autodoc">',
+        '<div class="autodoc-signature"><em>class </em><code>mocklib.<strong>ExampleClass</strong></code><span class="autodoc-punctuation">(</span><span class="autodoc-punctuation">)</span></div>',
+        '<div class="autodoc-docstring"><p>This is a class with a <em>docstring</em>.</p></div>',
+        '<div class="autodoc-members">',
+        '<div class="autodoc-signature"><code><strong>example_method</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">a</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">b=None</em><span class="autodoc-punctuation">)</span></div>',
+        '<div class="autodoc-docstring"><p>This is a method with a <em>docstring</em>.</p></div>',
+        "</div>",
+        "</div>",
+    ]
