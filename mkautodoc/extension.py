@@ -10,7 +10,10 @@ import typing
 
 # Fuzzy regex for determining source lines in __init__ that look like
 # attribute assignments.  Eg. `self.counter = 0`
-SET_ATTRIBUTE = re.compile("^([ \t]*)self[.]([A-Za-z0-9_]+) *=")
+SET_ATTRIBUTE = re.compile(r"^(?:[ \t]*)self[.]([A-Za-z0-9_]+) *=")
+
+# Fuzzy regex for a doc comment, e.g. `#: This is a comment`.
+DOC_COMMENT = re.compile(r"(?:[ \t]*)#: (.*)")
 
 
 def import_from_string(import_str: str) -> typing.Any:
@@ -117,6 +120,43 @@ def trim_docstring(docstring: typing.Optional[str]) -> str:
     return "\n".join(trimmed)
 
 
+def is_private(identifier: str) -> bool:
+    return identifier.startswith("_")
+
+
+def find_instance_attributes(cls: typing.Type) -> typing.List[typing.Tuple[str, str]]:
+    """
+    Given a class, return a list of (name, description) tuples for its instance attributes.
+    
+    * Name is inferred from statements in the form of 'self.<name> = ...'.
+    * Description comes from an optional block of '#: ...' comments above the attribute definition.
+    """
+    attributes = []
+    lines, _ = inspect.getsourcelines(cls.__init__)
+    description_comments: typing.List[str] = []
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+
+        m = DOC_COMMENT.match(stripped)
+        if m:
+            comment = m.group(1)
+            description_comments.append(comment)
+            continue
+
+        m = SET_ATTRIBUTE.match(stripped)
+        if m:
+            name = m.group(1)
+            description = " ".join(description_comments)
+            description_comments = []
+            if not is_private(name):
+                attributes.append((name, description))
+        else:
+            description_comments = []
+
+    return attributes
+
+
 class AutoDocProcessor(BlockProcessor):
 
     CLASSNAME = "autodoc"
@@ -169,6 +209,21 @@ class AutoDocProcessor(BlockProcessor):
             # line. Insert these lines as the first block of the master blocks
             # list for future processing.
             blocks.insert(0, theRest)
+
+    def render_instance_attributes(self, elem: etree.Element, cls: typing.Type) -> None:
+        for name, description in find_instance_attributes(cls):
+            attribute_elem = etree.SubElement(elem, "div")
+            attribute_elem.set("class", "autodoc-signature")
+
+            name_elem = etree.SubElement(attribute_elem, "code")
+            main_name_elem = etree.SubElement(name_elem, "strong")
+            main_name_elem.text = name
+
+            description_elem = etree.SubElement(attribute_elem, "div")
+            description_elem.set("class", "autodoc-docstring")
+
+            md = Markdown(extensions=self.md.registeredExtensions)
+            description_elem.text = md.convert(description)
 
     def render_signature(
         self, elem: etree.Element, item: typing.Any, import_string: str
@@ -233,8 +288,11 @@ class AutoDocProcessor(BlockProcessor):
         members_elem = etree.SubElement(elem, "div")
         members_elem.set("class", "autodoc-members")
 
+        if inspect.isclass(item):
+            self.render_instance_attributes(members_elem, item)
+
         if members is None:
-            members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
+            members = sorted([attr for attr in dir(item) if not is_private(attr)])
 
         info_items = []
         for attribute_name in members:
