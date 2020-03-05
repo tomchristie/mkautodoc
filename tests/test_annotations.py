@@ -9,7 +9,11 @@ def test_annotated_function():
 ::: mocklib.annotated_function
     :docstring:
 """
-    output = markdown.markdown(content, extensions=["mkautodoc"])
+    output = markdown.markdown(
+        content,
+        extensions=["mkautodoc"],
+        extension_configs={"mkautodoc": {"include_type_annotations": True}},
+    )
     assert_xml_equal(
         output,
         """\
@@ -31,7 +35,7 @@ def test_annotated_function():
       <em class="autodoc-param autodoc-param-name">b</em>
       <span class="autodoc-punctuation">: </span>
       <span class="autodoc-type-annotation">List[Dict[str, float]]</span>
-      <span class="autodoc-punctuation">=</span>
+      <span class="autodoc-punctuation"> = </span>
       <span class="autodoc-param-default">None</span>
       <span class="autodoc-punctuation">, </span>
     </span>
@@ -45,6 +49,55 @@ def test_annotated_function():
     <span class="autodoc-punctuation">)</span>
     <span class="autdoc-punctuation"> -&gt; </span>
     <span class="autodoc-type-annotation">bool</span>
+  </div>
+  <div class="autodoc-docstring">
+    <p>This function has annotations.</p>
+  </div>
+</div>""",
+    )
+
+
+def test_annotated_function_with_annotations_disabled():
+    content = """
+# Example
+
+::: mocklib.annotated_function
+    :docstring:
+"""
+    output = markdown.markdown(
+        content,
+        extensions=["mkautodoc"],
+        extension_configs={"mkautodoc": {"include_type_annotations": False}},
+    )
+    assert_xml_equal(
+        output,
+        """
+<h1>Example</h1>
+<div class="autodoc">
+  <div class="autodoc-signature">
+    <code>
+      mocklib.
+      <strong>annotated_function</strong>
+    </code>
+    <span class="autodoc-punctuation">(</span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">a</em>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">b</em>
+      <span class="autodoc-punctuation">=</span>
+      <span class="autodoc-param-default">None</span>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">*args</em>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">**kwargs</em>
+    </span>
+    <span class="autodoc-punctuation">)</span>
   </div>
   <div class="autodoc-docstring">
     <p>This function has annotations.</p>

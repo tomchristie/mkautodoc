@@ -30,7 +30,9 @@ def import_from_string(import_str: str) -> typing.Any:
         raise ValueError(f"Attribute {attr_str!r} not found in module {module_str!r}.")
 
 
-def render_params(signature: inspect.Signature) -> typing.List[etree.Element]:
+def render_params(
+    signature: inspect.Signature, include_type_annotations=False
+) -> typing.List[etree.Element]:
     """
     Given a function signature, return a list of parameters rendered to
     etree elements, for use in documentation.
@@ -55,14 +57,18 @@ def render_params(signature: inspect.Signature) -> typing.List[etree.Element]:
         )
         param_name.text = value
 
-        if parameter.annotation is not parameter.empty:
+        annotate_parameter = (
+            include_type_annotations and parameter.annotation is not parameter.empty
+        )
+
+        if annotate_parameter:
             colon = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
             colon.text = ": "
             type_ = etree.SubElement(param, "span", {"class": "autodoc-type-annotation"})
             type_.text = inspect.formatannotation(parameter.annotation)
         if parameter.default is not parameter.empty:
             equals = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
-            equals.text = "="
+            equals.text = " = " if annotate_parameter else "="
             default = etree.SubElement(
                 param, "span", {"class": "autodoc-param-default"}
             )
@@ -146,9 +152,10 @@ class AutoDocProcessor(BlockProcessor):
     RE = re.compile(r"(?:^|\n)::: ?([:a-zA-Z0-9_.]*) *(?:\n|$)")
     RE_SPACES = re.compile("  +")
 
-    def __init__(self, parser, md=None):
+    def __init__(self, parser, md: Markdown = None, extension: Extension = None):
         super().__init__(parser=parser)
         self.md = md
+        self.extension = extension
 
     def test(self, parent: etree.Element, block: etree.Element) -> bool:
         sibling = self.lastChild(parent)
@@ -198,6 +205,8 @@ class AutoDocProcessor(BlockProcessor):
     ) -> None:
         module_string, _, name_string = import_string.rpartition(".")
 
+        include_type_annotations = self.extension.getConfig("include_type_annotations")
+
         # Eg: `some_module.attribute_name`
         signature_elem = etree.SubElement(elem, "div")
         signature_elem.set("class", "autodoc-signature")
@@ -229,7 +238,9 @@ class AutoDocProcessor(BlockProcessor):
         bracket_elem.set("class", "autodoc-punctuation")
 
         if signature.parameters:
-            for param_elem, is_last in last_iter(render_params(signature)):
+            for param_elem, is_last in last_iter(
+                render_params(signature, include_type_annotations)
+            ):
                 signature_elem.append(param_elem)
                 if not is_last:
                     comma_elem = etree.SubElement(param_elem, "span")
@@ -246,7 +257,7 @@ class AutoDocProcessor(BlockProcessor):
             # covers return-type of class signatures:
             signature.return_annotation is not None
         )
-        if return_annotated:
+        if include_type_annotations and return_annotated:
             arrow = etree.SubElement(
                 signature_elem, "span", {"class": "autdoc-punctuation"}
             )
@@ -294,11 +305,21 @@ class AutoDocProcessor(BlockProcessor):
 
 
 class MKAutoDocExtension(Extension):
+    def __init__(self, **kwargs):
+        self.config = {
+            "include_type_annotations": [
+                False,
+                "Indicate whether type-annotations should"
+                " be included in function signatures",
+            ],
+        }
+        super().__init__(**kwargs)
+
     def extendMarkdown(self, md: Markdown) -> None:
         md.registerExtension(self)
-        processor = AutoDocProcessor(md.parser, md=md)
+        processor = AutoDocProcessor(md.parser, md=md, extension=self)
         md.parser.blockprocessors.register(processor, "mkautodoc", 110)
 
 
-def makeExtension():
-    return MKAutoDocExtension()
+def makeExtension(**kwargs):
+    return MKAutoDocExtension(**kwargs)

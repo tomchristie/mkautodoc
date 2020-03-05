@@ -85,3 +85,11 @@ May optionally accept a list of member attributes that should be documented. For
     :docstring:
     :members: currency vat_registered calculate_expenses
 ```
+
+#### The configuration options.
+
+`mkautodoc` allows configuration via the `mkdocs.yml` file. Parameters
+include:
+
+* `include_type_annotation` (bool) -- choose whether to include type
+  annotations in function signatures
