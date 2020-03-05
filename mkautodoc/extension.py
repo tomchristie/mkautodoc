@@ -2,6 +2,7 @@ from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.blockprocessors import BlockProcessor
 from markdown.util import etree
+from mkautodoc.typing import stringify as stringify_annotation
 import importlib
 import inspect
 import re
@@ -64,8 +65,10 @@ def render_params(
         if annotate_parameter:
             colon = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
             colon.text = ": "
-            type_ = etree.SubElement(param, "span", {"class": "autodoc-type-annotation"})
-            type_.text = inspect.formatannotation(parameter.annotation)
+            type_ = etree.SubElement(
+                param, "span", {"class": "autodoc-type-annotation"}
+            )
+            type_.text = stringify_annotation(parameter.annotation)
         if parameter.default is not parameter.empty:
             equals = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
             equals.text = " = " if annotate_parameter else "="

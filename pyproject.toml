@@ -1,0 +1,2 @@
+[tool.black]
+exclude = 'mkautodoc/typing.py'
