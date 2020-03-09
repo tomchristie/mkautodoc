@@ -68,7 +68,7 @@ def render_params(
             type_ = etree.SubElement(
                 param, "span", {"class": "autodoc-type-annotation"}
             )
-            type_.text = stringify_annotation(parameter.annotation)
+            type_.text = render_type_annotation(parameter.annotation)
         if parameter.default is not parameter.empty:
             equals = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
             equals.text = " = " if annotate_parameter else "="
@@ -94,6 +94,16 @@ def render_params(
         params.append(param)
 
     return params
+
+
+def render_type_annotation(annotation):
+    """ turn a tree of types into a cleaned string  """
+
+    # gives us string types like Dict[mkautodoc._utils.Foo, List[int]]
+    stringified_annotation = stringify_annotation(annotation)
+
+    # find and clean out module/package stuff (e.g. mkautodoc._utils.Foo -> Foo)
+    return re.sub(r"([^\[^\s]+\.)+", "", stringified_annotation)
 
 
 def last_iter(seq: typing.Sequence) -> typing.Iterator:
@@ -268,7 +278,7 @@ class AutoDocProcessor(BlockProcessor):
             signature_type = etree.SubElement(
                 signature_elem, "span", {"class": "autodoc-type-annotation"}
             )
-            signature_type.text = inspect.formatannotation(signature.return_annotation)
+            signature_type.text = render_type_annotation(signature.return_annotation)
 
         rendered_signature_text = "".join(signature_elem.itertext())
         if len(rendered_signature_text) > 88:

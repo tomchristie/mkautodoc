@@ -7,14 +7,6 @@ def example_function(a, b=None, *args, **kwargs):
     """
 
 
-def annotated_function(
-    a: int, b: List[Dict[str, float]] = None, *args, **kwargs
-) -> bool:
-    """
-    This function has annotations.
-    """
-
-
 class ExampleClass:
     """
     This is a class with a *docstring*.
@@ -40,4 +32,12 @@ class ExampleClass:
 async def example_async_function():
     """
     This is a coroutine function as can be seen by the *async* keyword.
+    """
+
+
+def annotated_function(
+    a: ExampleClass, b: List[Dict[str, float]] = None, *args, **kwargs
+) -> ExampleClass:
+    """
+    This function has annotations.
     """

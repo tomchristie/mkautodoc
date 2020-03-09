@@ -28,7 +28,7 @@ def test_annotated_function():
     <span class="autodoc-param-definition">
       <em class="autodoc-param autodoc-param-name">a</em>
       <span class="autodoc-punctuation">: </span>
-      <span class="autodoc-type-annotation">int</span>
+      <span class="autodoc-type-annotation">ExampleClass</span>
       <span class="autodoc-punctuation">, </span>
     </span>
     <span class="autodoc-param-definition">
@@ -48,7 +48,7 @@ def test_annotated_function():
     </span>
     <span class="autodoc-punctuation">)</span>
     <span class="autdoc-punctuation"> -&gt; </span>
-    <span class="autodoc-type-annotation">bool</span>
+    <span class="autodoc-type-annotation">ExampleClass</span>
   </div>
   <div class="autodoc-docstring">
     <p>This function has annotations.</p>
