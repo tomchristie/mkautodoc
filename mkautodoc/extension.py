@@ -2,6 +2,7 @@ from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.blockprocessors import BlockProcessor
 from markdown.util import etree
+from mkautodoc.typing import stringify as stringify_annotation
 import importlib
 import inspect
 import re
@@ -30,10 +31,12 @@ def import_from_string(import_str: str) -> typing.Any:
         raise ValueError(f"Attribute {attr_str!r} not found in module {module_str!r}.")
 
 
-def get_params(signature: inspect.Signature) -> typing.List[str]:
+def render_params(
+    signature: inspect.Signature, include_type_annotations=False
+) -> typing.List[etree.Element]:
     """
-    Given a function signature, return a list of parameter strings
-    to use in documentation.
+    Given a function signature, return a list of parameters rendered to
+    etree elements, for use in documentation.
 
     Eg. test(a, b=None, **kwargs) -> ['a', 'b=None', '**kwargs']
     """
@@ -42,26 +45,65 @@ def get_params(signature: inspect.Signature) -> typing.List[str]:
     render_kw_only_separator = True
 
     for parameter in signature.parameters.values():
-        value = parameter.name
-        if parameter.default is not parameter.empty:
-            value = f"{value}={parameter.default!r}"
+        param = etree.Element("span", {"class": "autodoc-param-definition"})
 
+        value = parameter.name
         if parameter.kind is parameter.VAR_POSITIONAL:
             render_kw_only_separator = False
             value = f"*{value}"
         elif parameter.kind is parameter.VAR_KEYWORD:
             value = f"**{value}"
+        param_name = etree.SubElement(
+            param, "em", {"class": "autodoc-param autodoc-param-name"}
+        )
+        param_name.text = value
+
+        annotate_parameter = (
+            include_type_annotations and parameter.annotation is not parameter.empty
+        )
+
+        if annotate_parameter:
+            colon = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
+            colon.text = ": "
+            type_ = etree.SubElement(
+                param, "span", {"class": "autodoc-type-annotation"}
+            )
+            type_.text = render_type_annotation(parameter.annotation)
+        if parameter.default is not parameter.empty:
+            equals = etree.SubElement(param, "span", {"class": "autodoc-punctuation"})
+            equals.text = " = " if annotate_parameter else "="
+            default = etree.SubElement(
+                param, "span", {"class": "autodoc-param-default"}
+            )
+            default.text = f"{parameter.default!r}"
+
         elif parameter.kind is parameter.POSITIONAL_ONLY:
             if render_pos_only_separator:
                 render_pos_only_separator = False
-                params.append("/")
+                pos_seperator = etree.SubElement(
+                    param, "span", {"class": "autodoc-punctuation"}
+                )
+                pos_seperator.text = "/"
         elif parameter.kind is parameter.KEYWORD_ONLY:
             if render_kw_only_separator:
                 render_kw_only_separator = False
-                params.append("*")
-        params.append(value)
+                kw_separator = etree.SubElement(
+                    param, "span", {"class": "autodoc-punctuation"}
+                )
+                kw_separator.text = "*"
+        params.append(param)
 
     return params
+
+
+def render_type_annotation(annotation):
+    """ turn a tree of types into a cleaned string  """
+
+    # gives us string types like Dict[mkautodoc._utils.Foo, List[int]]
+    stringified_annotation = stringify_annotation(annotation)
+
+    # find and clean out module/package stuff (e.g. mkautodoc._utils.Foo -> Foo)
+    return re.sub(r"([^\[^\s]+\.)+", "", stringified_annotation)
 
 
 def last_iter(seq: typing.Sequence) -> typing.Iterator:
@@ -123,9 +165,10 @@ class AutoDocProcessor(BlockProcessor):
     RE = re.compile(r"(?:^|\n)::: ?([:a-zA-Z0-9_.]*) *(?:\n|$)")
     RE_SPACES = re.compile("  +")
 
-    def __init__(self, parser, md=None):
+    def __init__(self, parser, md: Markdown = None, extension: Extension = None):
         super().__init__(parser=parser)
         self.md = md
+        self.extension = extension
 
     def test(self, parent: etree.Element, block: etree.Element) -> bool:
         sibling = self.lastChild(parent)
@@ -175,6 +218,8 @@ class AutoDocProcessor(BlockProcessor):
     ) -> None:
         module_string, _, name_string = import_string.rpartition(".")
 
+        include_type_annotations = self.extension.getConfig("include_type_annotations")
+
         # Eg: `some_module.attribute_name`
         signature_elem = etree.SubElement(elem, "div")
         signature_elem.set("class", "autodoc-signature")
@@ -182,9 +227,11 @@ class AutoDocProcessor(BlockProcessor):
         if inspect.isclass(item):
             qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "class "
+            qualifier_elem.set("class", "autodoc-qualifier")
         elif inspect.iscoroutinefunction(item):
             qualifier_elem = etree.SubElement(signature_elem, "em")
             qualifier_elem.text = "async "
+            qualifier_elem.set("class", "autodoc-qualifier")
 
         name_elem = etree.SubElement(signature_elem, "code")
         if module_string:
@@ -204,19 +251,40 @@ class AutoDocProcessor(BlockProcessor):
         bracket_elem.set("class", "autodoc-punctuation")
 
         if signature.parameters:
-            for param, is_last in last_iter(get_params(signature)):
-                param_elem = etree.SubElement(signature_elem, "em")
-                param_elem.text = param
-                param_elem.set("class", "autodoc-param")
-
+            for param_elem, is_last in last_iter(
+                render_params(signature, include_type_annotations)
+            ):
+                signature_elem.append(param_elem)
                 if not is_last:
-                    comma_elem = etree.SubElement(signature_elem, "span")
+                    comma_elem = etree.SubElement(param_elem, "span")
                     comma_elem.text = ", "
                     comma_elem.set("class", "autodoc-punctuation")
 
         bracket_elem = etree.SubElement(signature_elem, "span")
         bracket_elem.text = ")"
         bracket_elem.set("class", "autodoc-punctuation")
+
+        return_annotated = (
+            signature.return_annotation is not signature.empty
+            and
+            # covers return-type of class signatures:
+            signature.return_annotation is not None
+        )
+        if include_type_annotations and return_annotated:
+            arrow = etree.SubElement(
+                signature_elem, "span", {"class": "autdoc-punctuation"}
+            )
+            arrow.text = " -> "
+            signature_type = etree.SubElement(
+                signature_elem, "span", {"class": "autodoc-type-annotation"}
+            )
+            signature_type.text = render_type_annotation(signature.return_annotation)
+
+        rendered_signature_text = "".join(signature_elem.itertext())
+        if len(rendered_signature_text) > 88:
+            signature_elem.set(
+                "class", signature_elem.attrib["class"] + " autodoc-signature__long"
+            )
 
     def render_docstring(
         self, elem: etree.Element, item: typing.Any, docstring: str
@@ -250,11 +318,21 @@ class AutoDocProcessor(BlockProcessor):
 
 
 class MKAutoDocExtension(Extension):
+    def __init__(self, **kwargs):
+        self.config = {
+            "include_type_annotations": [
+                False,
+                "Indicate whether type-annotations should"
+                " be included in function signatures",
+            ],
+        }
+        super().__init__(**kwargs)
+
     def extendMarkdown(self, md: Markdown) -> None:
         md.registerExtension(self)
-        processor = AutoDocProcessor(md.parser, md=md)
+        processor = AutoDocProcessor(md.parser, md=md, extension=self)
         md.parser.blockprocessors.register(processor, "mkautodoc", 110)
 
 
-def makeExtension():
-    return MKAutoDocExtension()
+def makeExtension(**kwargs):
+    return MKAutoDocExtension(**kwargs)

@@ -1,3 +1,6 @@
+from typing import Dict, List
+
+
 def example_function(a, b=None, *args, **kwargs):
     """
     This is a function with a *docstring*.
@@ -29,4 +32,12 @@ class ExampleClass:
 async def example_async_function():
     """
     This is a coroutine function as can be seen by the *async* keyword.
+    """
+
+
+def annotated_function(
+    a: ExampleClass, b: List[Dict[str, float]] = None, *args, **kwargs
+) -> ExampleClass:
+    """
+    This function has annotations.
     """

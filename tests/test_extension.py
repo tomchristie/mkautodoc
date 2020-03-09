@@ -21,13 +21,23 @@ def test_docstring():
       <strong>example_function</strong>
     </code>
     <span class="autodoc-punctuation">(</span>
-    <em class="autodoc-param">a</em>
-    <span class="autodoc-punctuation">, </span>
-    <em class="autodoc-param">b=None</em>
-    <span class="autodoc-punctuation">, </span>
-    <em class="autodoc-param">*args</em>
-    <span class="autodoc-punctuation">, </span>
-    <em class="autodoc-param">**kwargs</em>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">a</em>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">b</em>
+      <span class="autodoc-punctuation">=</span>
+      <span class="autodoc-param-default">None</span>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">*args</em>
+      <span class="autodoc-punctuation">, </span>
+    </span>
+    <span class="autodoc-param-definition">
+      <em class="autodoc-param autodoc-param-name">**kwargs</em>
+    </span>
     <span class="autodoc-punctuation">)</span>
   </div>
   <div class="autodoc-docstring">
@@ -49,7 +59,7 @@ def test_async_function():
         """
 <div class="autodoc">
   <div class="autodoc-signature">
-    <em>async </em>
+    <em class="autodoc-qualifier">async </em>
     <code>
       mocklib.
       <strong>example_async_function</strong>
@@ -76,7 +86,7 @@ def test_members():
 <h1>Example</h1>
 <div class="autodoc">
   <div class="autodoc-signature">
-    <em>class </em>
+    <em class="autodoc-qualifier">class </em>
     <code>
       mocklib.
       <strong>ExampleClass</strong>
@@ -95,11 +105,19 @@ def test_members():
         <strong>example_method</strong>
       </code>
       <span class="autodoc-punctuation">(</span>
-      <em class="autodoc-param">self</em>
-      <span class="autodoc-punctuation">, </span>
-      <em class="autodoc-param">a</em>
-      <span class="autodoc-punctuation">, </span>
-      <em class="autodoc-param">b=None</em>
+      <span class="autodoc-param-definition">
+        <em class="autodoc-param autodoc-param-name">self</em>
+        <span class="autodoc-punctuation">, </span>
+      </span>
+      <span class="autodoc-param-definition">
+        <em class="autodoc-param autodoc-param-name">a</em>
+        <span class="autodoc-punctuation">, </span>
+      </span>
+      <span class="autodoc-param-definition">
+        <em class="autodoc-param autodoc-param-name">b</em>
+        <span class="autodoc-punctuation">=</span>
+        <span class="autodoc-param-default">None</span>
+      </span>
       <span class="autodoc-punctuation">)</span>
     </div>
     <div class="autodoc-docstring">
