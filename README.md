@@ -1,6 +1,6 @@
 # MkAutoDoc
 
-Python API documention for MkDocs.
+Python API documentation for MkDocs.
 
 This markdown extension adds `autodoc` style support, for use with MkDocs.
 
