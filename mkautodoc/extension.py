@@ -1,7 +1,7 @@
 from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.blockprocessors import BlockProcessor
-from markdown.util import etree
+from xml.etree import ElementTree as etree
 import importlib
 import inspect
 import re
