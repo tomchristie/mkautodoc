@@ -37,7 +37,7 @@ setup(
     author='Tom Christie',
     author_email='tom@tomchristie.com',
     packages=get_packages('mkautodoc'),
-    install_requires=[],
+    install_requires=["Markdown>=3.4.1"],
     python_requires='>=3.6',
     classifiers=[
         'Development Status :: 3 - Alpha',
